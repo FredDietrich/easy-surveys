@@ -4,17 +4,20 @@ import { createHashRouter, RouterProvider } from 'react-router-dom'
 import { createTheme } from '@mui/material/styles'
 import { ThemeProvider } from '@emotion/react'
 import pages from './pages'
+import { AuthProvider } from './contexts/auth.context'
 
 const router = createHashRouter(pages)
 
 const theme = createTheme({
-  palette: {mode: 'dark'}
+  palette: { mode: 'dark' }
 })
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
-    <ThemeProvider theme={theme}>
-      <RouterProvider router={router} />
-    </ThemeProvider>
+    <AuthProvider>
+      <ThemeProvider theme={theme}>
+        <RouterProvider router={router} />
+      </ThemeProvider>
+    </AuthProvider>
   </React.StrictMode>
 )

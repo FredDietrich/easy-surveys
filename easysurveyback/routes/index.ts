@@ -5,4 +5,6 @@ import questionRouter from './question.route'
 import surveyRouter from './survey.route'
 import userRouter from './user.route'
 
-export default [alternativeRouter, answerRouter, loginRouter, questionRouter, surveyRouter, userRouter]
+export const protectedRoutes = [alternativeRouter, answerRouter, questionRouter, surveyRouter]
+
+export const openRoutes = [loginRouter, userRouter]

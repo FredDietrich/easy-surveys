@@ -1,7 +1,7 @@
 import express from 'express'
 import dotenv from 'dotenv'
 import initializeSequelize from './database/databaseConfig'
-import routes from './routes'
+import { protectedRoutes, openRoutes } from './routes'
 import session from 'express-session'
 import passport from 'passport'
 import { initializePassport } from './authentication/passport.config'
@@ -31,7 +31,9 @@ app.use(passport.session())
 app.use(cors({
     credentials: true
 }))
-app.use('/api', ...routes)
+
+app.use('/api', passport.authenticate('jwt', {session: false}), ...protectedRoutes)
+app.use('/api', ...openRoutes)
 
 initializeSequelize().then(() => {
     console.log('⚡️[backend]: Sequelize synced')
