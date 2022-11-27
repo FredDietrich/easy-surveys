@@ -13,19 +13,21 @@ loginRouter.post(
     '/login',
     async (req, res, next) => {
         passport.authenticate(
-            'login',
+            'local',
             async (err, user) => {
                 try {
-                    if (err || !user) {
+                    if (err) {
                         const error = new Error('An error occurred.')
                         return next(error)
+                    } else if (!user) {
+                        return res.status(401).send('Usuário ou senha inválidos!')
                     }
                     req.login(
                         user,
                         { session: false },
                         async (error) => {
                             if (error) return next(error)
-
+                            console.log(user)
                             const body = { id: user.id, username: user.username }
                             const token = jwt.sign({ user: body }, jwtSecret)
 

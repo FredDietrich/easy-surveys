@@ -47,6 +47,7 @@ export function initializePassport(passport: PassportStatic) {
             },
             async (token, done) => {
                 try {
+                    console.log(token.user)
                     return done(null, token.user)
                 } catch (error) {
                     done(error)

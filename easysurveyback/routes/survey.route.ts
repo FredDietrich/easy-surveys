@@ -7,7 +7,7 @@ import { ensureLoggedIn } from '../util/checkLogin.helper'
 
 const surveyRouter = Router()
 
-surveyRouter.get('/survey', passport.authenticate(['basic'], {session: true}), ensureLoggedIn, async (req: Request, res: Response) => {
+surveyRouter.get('/survey', ensureLoggedIn, async (req: Request, res: Response) => {
     const survey = await Survey.findAll()
     res.status(200).json(survey)
 })

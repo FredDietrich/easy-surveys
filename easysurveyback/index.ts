@@ -27,13 +27,12 @@ app.use(session(
     }
 ))
 app.use(passport.initialize())
-app.use(passport.session())
 app.use(cors({
     credentials: true
 }))
 
-app.use('/api', passport.authenticate('jwt', {session: false}), ...protectedRoutes)
 app.use('/api', ...openRoutes)
+app.use('/api', passport.authenticate('jwt', {session: false}), ...protectedRoutes)
 
 initializeSequelize().then(() => {
     console.log('⚡️[backend]: Sequelize synced')
