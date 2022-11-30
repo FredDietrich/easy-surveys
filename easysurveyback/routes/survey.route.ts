@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Request, Response, Router } from 'express'
-import passport from 'passport'
 import { Question } from '../entities/question.entity'
 import { Survey } from '../entities/survey.entity'
 import { ensureLoggedIn } from '../util/checkLogin.helper'
@@ -39,7 +38,7 @@ surveyRouter.put('/survey/:id', ensureLoggedIn, async (req: Request<Record<strin
 })
 
 surveyRouter.get('/survey/:id/question', ensureLoggedIn, async (req: Request<Record<string, any>, Record<string, never>, Question>, res: Response) => {
-    const foundSurvey = await Survey.findByPk(req.params.id)
+    const foundSurvey = await Survey.findByPk(req.params.id, {include: Question})
     if(!foundSurvey) {
         res.status(404).send()
         return

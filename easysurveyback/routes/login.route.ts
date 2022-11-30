@@ -27,11 +27,10 @@ loginRouter.post(
                         { session: false },
                         async (error) => {
                             if (error) return next(error)
-                            console.log(user)
-                            const body = { id: user.id, username: user.username }
-                            const token = jwt.sign({ user: body }, jwtSecret)
+                            user.password = ''
+                            const token = jwt.sign({ user: user }, jwtSecret)
 
-                            return res.json({ token })
+                            return res.json({ token, user })
                         }
                     )
                 } catch (error) {

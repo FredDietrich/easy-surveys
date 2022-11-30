@@ -39,7 +39,7 @@ questionRouter.put('/question/:id', ensureLoggedIn, async (req: Request<Record<s
 })
 
 questionRouter.get('/question/:id/alternative', ensureLoggedIn, async (req: Request<Record<string, any>, Record<string, never>, Alternative>, res: Response) => {
-    const foundQuestion = await Question.findByPk(req.params.id)
+    const foundQuestion = await Question.findByPk(req.params.id, {include: Alternative})
     if(!foundQuestion) {
         res.status(404).send()
         return

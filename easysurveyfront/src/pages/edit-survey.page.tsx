@@ -10,7 +10,7 @@ import FormItem from "../components/form-item.component";
 import Form from "../components/form.component";
 import Header from "../components/header.component";
 import Survey from "../model/survey.model";
-import Question, { QuestionType } from "../model/question.model";
+import Question, { QuestionTypeEnum } from "../model/question.model";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemText from "@mui/material/ListItemText";
 import Divider from "@mui/material/Divider";
@@ -26,6 +26,7 @@ import InputAdornment from "@mui/material/InputAdornment";
 import IconButton from "@mui/material/IconButton";
 import { OutlinedInput } from "@mui/material";
 import AddIcon from '@mui/icons-material/Add';
+import * as api from '../api/api';
 
 interface IOpenItem {
     id: number,
@@ -45,9 +46,29 @@ function EditSurvey() {
             navigate('/listing')
             return
         }
-        setTimeout(() => setSurvey({ id: +surveyId, title: `Pesquisa ${surveyId}` }), 0)
-        setTimeout(() => setQuestions([{ id: 1, title: 'Em poucas palavras, descreva como encontrou o app:', type: QuestionType.MULTIPLE_ANSWER }, { id: 2, title: 'Qual das opções melhor representa seu cargo atual?', type: QuestionType.MULTIPLE_ANSWER }]), 0)
+        async function findSurvey() {
+            try {
+                const foundSurvey = await api.get("survey/" + surveyId)
+                setSurvey(foundSurvey.data)
+            } catch (e) { console.error(e) }
+        }
+        async function findQuestions() {
+            try {
+                const foundQuestions = await api.get("survey/" + surveyId + "/question")
+                setQuestions(foundQuestions.data)
+            } catch (e) { console.error(e) }
+        }
+        findSurvey()
+        findQuestions()
     }, [])
+
+    function addAlternativeToQuestion(questionId: number, newAlternative: Alternative) {
+        const foundQuestion = questions.find(question => question.id == questionId)
+        if(!foundQuestion) return
+        setQuestions(currentQuestions => currentQuestions.map(question => {
+            return question.id == questionId ? { ...question, alternatives: question.alternatives ? [...question.alternatives, newAlternative] : [newAlternative] } : question
+        }))
+    }
 
     function toggleOpen(id: number) {
         const foundItem = openItems.find(item => item.id == id)
@@ -64,22 +85,12 @@ function EditSurvey() {
         return foundItem ? foundItem.open : false
     }
 
-    function handleQuestionTypeChange(e: SelectChangeEvent<QuestionType>, id: number) {
+    function handleQuestionTypeEnumChange(e: SelectChangeEvent<QuestionTypeEnum>, id: number) {
         e.preventDefault()
-        const value = e.target.value as QuestionType
+        const value = e.target.value as QuestionTypeEnum
         setQuestions(questions => questions.map(question => {
             return question.id == id ? { ...question, type: value } : question
         }))
-    }
-
-    function getAlternatives(id: number): Alternative[] {
-        return [
-            {
-                id: 1,
-                title: 'Estudante',
-                questionId: id
-            }
-        ]
     }
 
     return (
@@ -87,9 +98,9 @@ function EditSurvey() {
             <Header />
             <Form>
                 <FormItem>
-                    <Grid container columns={4} sx={{ textAlign: 'center' }}>
+                    <Grid container columns={4} sx={{ FREE_TEXTAlign: 'center' }}>
                         {!survey ? <Grid item xs={4} sm={4} md={2} lg={2} xl={2} sx={{
-                            textAlign: 'center',
+                            FREE_TEXTAlign: 'center',
                             marginTop: '5rem',
                         }}>
                             <Typography
@@ -107,7 +118,7 @@ function EditSurvey() {
                         </Grid> : (
                             <>
                                 <Grid item xs={4} sm={4} md={2} lg={2} xl={2} sx={{
-                                    textAlign: 'center',
+                                    FREE_TEXTAlign: 'center',
                                     marginTop: '5rem',
                                 }}>
                                     <Typography
@@ -123,7 +134,7 @@ function EditSurvey() {
                                         Editando pesquisa:
                                     </Typography>
                                 </Grid>
-                                <Grid item xs={4} sm={4} md={2} lg={2} xl={2} sx={{ textAlign: 'left', marginTop: '1.3rem' }}>
+                                <Grid item xs={4} sm={4} md={2} lg={2} xl={2} sx={{ FREE_TEXTAlign: 'left', marginTop: '1.3rem' }}>
                                     <Typography
                                         variant="h4"
                                         component="div"
@@ -135,7 +146,7 @@ function EditSurvey() {
                                             paddingRight: '5%'
                                         }}
                                     >
-                                        {survey.title}
+                                        {survey.name}
                                     </Typography>
                                 </Grid>
                             </>)}
@@ -168,11 +179,11 @@ function EditSurvey() {
                                                                     id="demo-simple-select"
                                                                     value={question.type}
                                                                     label="Tipo de questão"
-                                                                    onChange={e => handleQuestionTypeChange(e, question.id)}
+                                                                    onChange={e => handleQuestionTypeEnumChange(e, question.id)}
                                                                 >
-                                                                    <MenuItem value={QuestionType.MULTIPLE_ANSWER}>Múltipla escolha</MenuItem>
-                                                                    <MenuItem value={QuestionType.TEXT}>Texto livre</MenuItem>
-                                                                    <MenuItem value={QuestionType.MULTIPLE_ANSWER_OTHER}>Múltipla escolha + Outro</MenuItem>
+                                                                    <MenuItem value={QuestionTypeEnum.MULTIPLE_ANSWER}>Múltipla escolha</MenuItem>
+                                                                    <MenuItem value={QuestionTypeEnum.FREE_TEXT}>Texto livre</MenuItem>
+                                                                    <MenuItem value={QuestionTypeEnum.MULTIPLE_ANSWER_OTHER}>Múltipla escolha + Outro</MenuItem>
                                                                 </Select>
                                                             </FormControl>
                                                             <Button sx={{ position: 'absolute', right: '2%' }}>
@@ -181,8 +192,8 @@ function EditSurvey() {
                                                         </Box>
                                                     </ListItem>
                                                     <ListItem sx={{ pl: 8 }}>
-                                                        {question.type != QuestionType.TEXT && (
-                                                            getAlternatives(question.id).map((alternative, aIndex) => (
+                                                        {question.type != QuestionTypeEnum.FREE_TEXT && (
+                                                            (question.alternatives ?? []).map((alternative, aIndex) => (
                                                                 <div key={aIndex}>
                                                                     <InputLabel htmlFor="deleta-senha">Valor</InputLabel>
                                                                     <OutlinedInput
@@ -205,9 +216,16 @@ function EditSurvey() {
                                                         )
                                                         }
                                                     </ListItem>
-                                                    { question.type != QuestionType.TEXT && (
+                                                    { question.type != QuestionTypeEnum.FREE_TEXT && (
                                                         <ListItem>
-                                                            <Button color="success" startIcon={<AddIcon />} sx={{ ml: 8 }}>
+                                                            <Button
+                                                                color="success"
+                                                                startIcon={<AddIcon />}
+                                                                sx={{ ml: 8 }}
+                                                                onClick={() => {
+                                                                    addAlternativeToQuestion(question.id, {} as Alternative)
+                                                                }}
+                                                            >
                                                                 Adicionar alternativa
                                                             </Button>
                                                         </ListItem>

@@ -2,12 +2,14 @@ import { AppBar, Box, Toolbar } from "@mui/material";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
 import { Link } from "react-router-dom";
+import { useAuth } from "../contexts/auth.context";
 
 interface IHeaderProps {
     loggedIn?: boolean
 }
 
 export default function Header({ loggedIn }: IHeaderProps) {
+    const { signed } = useAuth();
     return (
         <Box sx={{ flexGrow: 1 }}>
             <AppBar
@@ -25,12 +27,12 @@ export default function Header({ loggedIn }: IHeaderProps) {
                     >
                         Easy Surveys
                     </Typography>
-                    <Link to={loggedIn ? "/logout" : "/login"}>
+                    <Link to={signed ? "/logout" : "/login"}>
                         <Button
                             variant="contained"
-                            color={loggedIn ? "error" : "primary"}
+                            color={signed ? "error" : "primary"}
                         >
-                            {loggedIn ? "Sair" : "Login"}
+                            {signed ? "Sair" : "Login"}
                         </Button>
                     </Link>
                 </Toolbar>

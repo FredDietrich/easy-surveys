@@ -10,7 +10,7 @@ import FormItem from "../components/form-item.component";
 import Form from "../components/form.component";
 import Header from "../components/header.component";
 import Survey from "../model/survey.model";
-import Question, { QuestionType } from "../model/question.model";
+import Question, { QuestionTypeEnum } from "../model/question.model";
 import ListItemText from "@mui/material/ListItemText";
 import Divider from "@mui/material/Divider";
 import FormControl from "@mui/material/FormControl";
@@ -61,8 +61,8 @@ function ViewSurvey() {
             navigate('/listing')
             return
         }
-        setTimeout(() => setSurvey({ id: +surveyId, title: `Pesquisa ${surveyId}` }), 0)
-        setTimeout(() => setQuestion({ id: 1, title: 'Em poucas palavras, descreva como encontrou o app:', type: QuestionType.MULTIPLE_ANSWER_OTHER }), 0)
+        // setTimeout(() => setSurvey({ id: +surveyId, title: `Pesquisa ${surveyId}` }), 0)
+        // setTimeout(() => setQuestion({ id: 1, title: 'Em poucas palavras, descreva como encontrou o app:', type: QuestionTypeEnum.MULTIPLE_ANSWER_OTHER }), 0)
     }, [])
 
     return (
@@ -117,7 +117,7 @@ function ViewSurvey() {
                                             paddingRight: '5%'
                                         }}
                                     >
-                                        {survey.title}
+                                        {survey.name}
                                     </Typography>
                                 </Grid>
                             </>)}

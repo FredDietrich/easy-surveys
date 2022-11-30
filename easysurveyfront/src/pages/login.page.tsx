@@ -5,17 +5,42 @@ import Form from "../components/form.component";
 import Header from "../components/header.component";
 import DynamicFormIcon from '@mui/icons-material/DynamicForm';
 import Typography from "@mui/material/Typography";
-import styled from "@emotion/styled";
 import { useState } from "react";
 import { Button } from "@mui/material";
+import { useAuth } from "../contexts/auth.context";
 
 interface ILoginFormData {
     username: string,
     password: string
 }
 
-function handleLogin(loginData: ILoginFormData) {
-    //TODO: Fazer login
+
+function UsernameField({ loginFormData, setLoginFormData }: any) {
+    return (
+        <TextField
+            label="Username"
+            variant="outlined"
+            color="primary"
+            fullWidth
+            required
+            value={loginFormData.username}
+            onChange={e => setLoginFormData({ ...loginFormData, username: e.target.value })}
+        />
+    )
+}
+
+function PasswordField({ loginFormData, setLoginFormData }: any) {
+    return (
+        <TextField
+            label="Senha"
+            variant="outlined"
+            color="primary"
+            fullWidth
+            required
+            value={loginFormData.password}
+            onChange={e => setLoginFormData({ ...loginFormData, password: e.target.value })}
+        />
+    )
 }
 
 function LoginPage() {
@@ -23,6 +48,14 @@ function LoginPage() {
         username: "",
         password: ""
     });
+
+    const { Login } = useAuth();
+
+    async function handleLogin() {
+        await Login({
+            ...loginFormData
+        })
+    }
 
     return (
         <div className="LoginPage">
@@ -53,33 +86,16 @@ function LoginPage() {
                     </Typography>
                 </FormItem>
                 <FormItem>
-                    <TextField
-                        label="Username"
-                        variant="outlined"
-                        color="primary"
-                        fullWidth
-                        autoFocus
-                        required
-                        value={loginFormData.username}
-                        onChange={e => setLoginFormData({ ...loginFormData, username: e.target.value })}
-                    />
+                    <UsernameField loginFormData={loginFormData} setLoginFormData={setLoginFormData} />
                 </FormItem>
                 <FormItem>
-                    <TextField
-                        label="Senha"
-                        variant="outlined"
-                        color="primary"
-                        fullWidth
-                        required
-                        value={loginFormData.password}
-                        onChange={e => setLoginFormData({ ...loginFormData, password: e.target.value })}
-                    />
+                    <PasswordField loginFormData={loginFormData} setLoginFormData={setLoginFormData} />
                 </FormItem>
                 <FormItem justifyContent="center">
                     <Button
                         variant="contained"
                         type="submit"
-                        onClick={e => {e.preventDefault(); handleLogin(loginFormData)}}
+                        onClick={e => { e.preventDefault(); handleLogin() }}
                     >
                         Login
                     </Button>
