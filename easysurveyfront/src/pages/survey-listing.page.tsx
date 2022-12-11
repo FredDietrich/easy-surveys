@@ -1,4 +1,4 @@
-import { Link, RouteObject } from "react-router-dom"
+import { Link, RouteObject, useNavigate } from "react-router-dom"
 import Typography from "@mui/material/Typography"
 import Box from "@mui/material/Box"
 import Button from "@mui/material/Button"
@@ -18,13 +18,39 @@ import { Divider, ListItemButton, Skeleton } from "@mui/material"
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import { useEffect, useState } from "react"
 import Survey from "../model/survey.model"
+import * as api from '../api/api';
+import { useAuth } from "../contexts/auth.context"
 
 function SurveyListing() {
 
     const [surveys, setSurveys] = useState<Survey[]>([]);
+    const { user, signed } = useAuth()
+    const navigate = useNavigate()
+
+    function notSigned() {
+        navigate("/login")
+        return <div>Não autenticado</div>
+    }
+
+    async function createSurvey() {
+        const createdSurvey = await api.post('survey', {name: 'Edite-me clicando no lápis'})
+        await api.put('user/' + user?.id + '/survey', {id: createdSurvey.data.id})
+        return navigate('/edit/' + createdSurvey.data.id)
+    }
 
     useEffect(() => {
-        setTimeout(() => setSurveys([{ id: 1, title: 'Pesquisa 1' }, { id: 2, title: 'Pesquisa 2' }, { id: 3, title: 'Pesquisa 3' }]), 0)
+        async function fetchSurveys() {
+            if (!signed) {
+                return notSigned()
+            }
+            try {
+                const foundSurveys = await api.get("user/" + (user ?? {id: null}).id + "/survey")
+                setSurveys(foundSurveys.data)
+            } catch {
+                setSurveys([])
+            }
+        }
+        fetchSurveys()
     }, [])
 
 
@@ -44,6 +70,7 @@ function SurveyListing() {
                             height: '4rem'
                         }}
                         startIcon={<AddIcon />}
+                        onClick={createSurvey}
                     >
                         Nova Pesquisa
                     </Button>
@@ -106,7 +133,7 @@ function SurveyListing() {
                                                                     </Avatar>
                                                                 </ListItemAvatar>
                                                                 <ListItemText
-                                                                    primary={<p style={{ color: 'white' }}>{survey.title}</p>}
+                                                                    primary={<p style={{ color: 'white' }}>{survey.name}</p>}
                                                                 />
                                                             </ListItemButton>
                                                         </Link>

@@ -2,15 +2,14 @@
 import { Request, Response, Router } from 'express'
 import { Alternative } from '../entities/alternative.entity'
 import { Answer } from '../entities/answer.entity'
-import { ensureLoggedIn, ensureNotLoggedIn } from '../util/checkLogin.helper'
 const alternativeRouter = Router()
 
-alternativeRouter.get('/alternative', ensureLoggedIn, async (req: Request, res: Response) => {
+alternativeRouter.get('/alternative', async (req: Request, res: Response) => {
     const alternatives = await Alternative.findAll()
     res.status(200).json(alternatives)
 })
 
-alternativeRouter.get('/alternative/:id', ensureLoggedIn, async (req: Request<Record<string, any>, Record<string, never>, Alternative>, res: Response) => {
+alternativeRouter.get('/alternative/:id', async (req: Request<Record<string, any>, Record<string, never>, Alternative>, res: Response) => {
     const foundAlternative = await Alternative.findByPk(req.params.id)
     if(!foundAlternative) {
         res.status(404).send()
@@ -19,7 +18,7 @@ alternativeRouter.get('/alternative/:id', ensureLoggedIn, async (req: Request<Re
     res.status(200).json(foundAlternative)
 })
 
-alternativeRouter.post('/alternative', ensureNotLoggedIn, async (req: Request<Record<string, never>, Record<string, never>, Alternative>, res: Response) => {
+alternativeRouter.post('/alternative', async (req: Request<Record<string, never>, Record<string, never>, Alternative>, res: Response) => {
     const alternative = await Alternative.create({...req.body})
     if(alternative) {
         res.status(201).location(`/alternative/${alternative.id}`).json(alternative)
@@ -28,7 +27,7 @@ alternativeRouter.post('/alternative', ensureNotLoggedIn, async (req: Request<Re
     res.status(500).send()
 })
 
-alternativeRouter.put('/alternative/:id', ensureLoggedIn, async (req: Request<Record<string, any>, Record<string, never>, Alternative>, res: Response) => {
+alternativeRouter.put('/alternative/:id', async (req: Request<Record<string, any>, Record<string, never>, Alternative>, res: Response) => {
     const foundAlternative = await Alternative.findByPk(req.params.id)
     if(!foundAlternative) {
         res.status(404).send()
@@ -38,7 +37,7 @@ alternativeRouter.put('/alternative/:id', ensureLoggedIn, async (req: Request<Re
     res.status(204).send() 
 })
 
-alternativeRouter.get('/alternative/:id/answer', ensureLoggedIn, async (req: Request<Record<string, any>, Record<string, never>, Answer>, res: Response) => {
+alternativeRouter.get('/alternative/:id/answer', async (req: Request<Record<string, any>, Record<string, never>, Answer>, res: Response) => {
     const foundAlternative = await Alternative.findByPk(req.params.id)
     if(!foundAlternative) {
         res.status(404).send()
@@ -47,7 +46,7 @@ alternativeRouter.get('/alternative/:id/answer', ensureLoggedIn, async (req: Req
     res.status(200).json(foundAlternative.answers)
 })
 
-alternativeRouter.put('/alternative/:id/answer', ensureLoggedIn, async (req: Request<Record<string, any>, Record<string, never>, Answer>, res: Response) => {
+alternativeRouter.put('/alternative/:id/answer', async (req: Request<Record<string, any>, Record<string, never>, Answer>, res: Response) => {
     const foundAlternative = await Alternative.findByPk(req.params.id)
     if(!foundAlternative) {
         res.status(404).send()

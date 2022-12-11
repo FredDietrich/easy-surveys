@@ -24,22 +24,34 @@ import Alternative from "../model/alternative.model";
 import DeleteIcon from '@mui/icons-material/Delete';
 import InputAdornment from "@mui/material/InputAdornment";
 import IconButton from "@mui/material/IconButton";
-import { OutlinedInput } from "@mui/material";
+import { OutlinedInput, TextField } from "@mui/material";
 import AddIcon from '@mui/icons-material/Add';
 import * as api from '../api/api';
+import { useAuth } from "../contexts/auth.context";
+import EditIcon from '@mui/icons-material/Edit';
+import SaveIcon from '@mui/icons-material/Save';
 
 interface IOpenItem {
     id: number,
     open: boolean
 }
 
+interface IEditableTitles {
+    id: number,
+    editable: boolean
+}
+
 function EditSurvey() {
 
     const { surveyId } = useParams();
     const navigate = useNavigate();
-    const [survey, setSurvey] = useState<Survey | undefined>();
+    const [survey, setSurvey] = useState<Partial<Survey>>({
+        name: ''
+    });
     const [questions, setQuestions] = useState<Question[]>([]);
     const [openItems, setOpenItems] = useState<IOpenItem[]>([]);
+    const [editableTitles, setEditableTitles] = useState<IEditableTitles[]>([])
+    const { user } = useAuth()
 
     useEffect(() => {
         if (!surveyId || Number.isNaN(+surveyId)) {
@@ -50,24 +62,34 @@ function EditSurvey() {
             try {
                 const foundSurvey = await api.get("survey/" + surveyId)
                 setSurvey(foundSurvey.data)
-            } catch (e) { console.error(e) }
-        }
-        async function findQuestions() {
-            try {
-                const foundQuestions = await api.get("survey/" + surveyId + "/question")
-                setQuestions(foundQuestions.data)
+                setQuestions((foundSurvey.data.questions as Question[]).sort((a, b) => a.order > b.order ? 1 : -1))
             } catch (e) { console.error(e) }
         }
         findSurvey()
-        findQuestions()
     }, [])
 
-    function addAlternativeToQuestion(questionId: number, newAlternative: Alternative) {
+    async function addQuestion() {
+        if (!user) {
+            return navigate("/login")
+        }
+        const createdQuestion = await api.post("question", { title: "Edite-me clicando no lápis" })
+        await api.put("survey/" + survey.id + "/question", { id: createdQuestion.data.id })
+        await saveSurvey()
+        location.reload()
+    }
+
+    async function addAlternativeToQuestion(questionId: number) {
         const foundQuestion = questions.find(question => question.id == questionId)
-        if(!foundQuestion) return
-        setQuestions(currentQuestions => currentQuestions.map(question => {
-            return question.id == questionId ? { ...question, alternatives: question.alternatives ? [...question.alternatives, newAlternative] : [newAlternative] } : question
-        }))
+        if (!foundQuestion) return
+        const createdAlternative = await api.post("alternative", { name: "Edite meu nome" })
+        setQuestions(currentQuestions => 
+            currentQuestions.map(quest => {
+                return quest.id == questionId ? {...quest, alternatives: [...quest.alternatives, createdAlternative.data]} : quest
+            })
+        )
+        await api.put("question/" + questionId + "/alternative", { id: createdAlternative.data.id })
+        await saveSurvey()
+        location.reload()
     }
 
     function toggleOpen(id: number) {
@@ -93,14 +115,70 @@ function EditSurvey() {
         }))
     }
 
+    function isTitleEditable(id: number) {
+        const foundTitle = editableTitles.find(title => title.id == id)
+        return foundTitle ? foundTitle.editable : false
+    }
+
+    function toggleEditableTitle(id: number) {
+        const foundTitle = editableTitles.find(title => title.id == id)
+        if (!foundTitle) {
+            return setEditableTitles(currentEditableTitles => [...currentEditableTitles, { id: id, editable: true }])
+        }
+        setEditableTitles(currentEditableTitles => currentEditableTitles.map(title => {
+            return title.id == id ? { ...title, editable: !title.editable } : title
+        }))
+    }
+
+    async function saveSurvey() {
+        await api.put('survey/'+ survey.id, {...survey})
+        if ((questions.length != survey.questions?.length) &&  (survey.questions && survey.questions.length > 0)) {
+            await api.put("survey/" + survey.id, {...survey, questions})
+        }
+        questions.forEach(async (question, index) => {
+            await api.put("question/" + question.id, JSON.parse(JSON.stringify({ ...question, order: index + 1 })))
+        })
+        alert('Pesquisa salva com sucesso')
+    }
+
+    function handleAlternativeNameChange(e: any, alternativeId: number, questionId: number) {
+        setQuestions(currentQuestions => {
+            return currentQuestions.map(question => {
+                if (!question.alternatives) return question
+                if (!(question.id == questionId)) return question
+                return {
+                    ...question, alternatives: question.alternatives.map(alternative => {
+                        return alternative.id == alternativeId ? { ...alternative, name: e.target.value as string } : alternative
+                    })
+                }
+            })
+        })
+    }
+
+    function deleteAlternative(alternativeId: number, questionId: number) {
+        setQuestions(currentQuestions => {
+            return currentQuestions.map(question => {
+                if (!question.alternatives) return question
+                if (!(question.id == questionId)) return question
+                return { ...question, alternatives: question.alternatives.filter(alt => alt.id != alternativeId) }
+            })
+        })
+    }
+
+    function deleteQuestion(questionId: number) {
+        setQuestions(currentQuestions => {
+            return currentQuestions.filter(ques => ques.id != questionId)
+        })
+    }
+
     return (
         <div className="EditSurvey">
             <Header />
             <Form>
                 <FormItem>
-                    <Grid container columns={4} sx={{ FREE_TEXTAlign: 'center' }}>
+                    <Grid container columns={4} sx={{ textAlign: 'center' }}>
                         {!survey ? <Grid item xs={4} sm={4} md={2} lg={2} xl={2} sx={{
-                            FREE_TEXTAlign: 'center',
+                            textAlign: 'center',
                             marginTop: '5rem',
                         }}>
                             <Typography
@@ -118,7 +196,7 @@ function EditSurvey() {
                         </Grid> : (
                             <>
                                 <Grid item xs={4} sm={4} md={2} lg={2} xl={2} sx={{
-                                    FREE_TEXTAlign: 'center',
+                                    textAlign: 'center',
                                     marginTop: '5rem',
                                 }}>
                                     <Typography
@@ -134,7 +212,7 @@ function EditSurvey() {
                                         Editando pesquisa:
                                     </Typography>
                                 </Grid>
-                                <Grid item xs={4} sm={4} md={2} lg={2} xl={2} sx={{ FREE_TEXTAlign: 'left', marginTop: '1.3rem' }}>
+                                <Grid item xs={4} sm={4} md={2} lg={2} xl={2} sx={{ textAlign: 'left', marginTop: '1.3rem' }}>
                                     <Typography
                                         variant="h4"
                                         component="div"
@@ -146,7 +224,16 @@ function EditSurvey() {
                                             paddingRight: '5%'
                                         }}
                                     >
-                                        {survey.name}
+                                        {isTitleEditable(-1) ?
+                                            <TextField value={survey.name} onChange={e => setSurvey(currentSurvey => ({ ...currentSurvey, name: e.target.value }))} />
+                                            :
+                                            survey.name
+                                        }
+                                        <IconButton
+                                            onClick={() => toggleEditableTitle(-1)}
+                                        >
+                                            {isTitleEditable(-1) ? <SaveIcon /> : <EditIcon />}
+                                        </IconButton>
                                     </Typography>
                                 </Grid>
                             </>)}
@@ -155,23 +242,48 @@ function EditSurvey() {
                 <FormItem>
                     <Box sx={{ height: 'auto', width: '100%', borderRadius: '1rem' }} bgcolor='#434b65'>
                         <List dense>
+                            <ListItem sx={{ textAlign: 'center', display: 'block' }}>
+                                <Button
+                                    color="success"
+                                    variant="contained"
+                                    startIcon={<SaveIcon />}
+                                    onClick={() => saveSurvey()}
+                                >
+                                    Salvar pesquisa
+                                </Button>
+                            </ListItem>
                             {
                                 questions.length < 1 ?
-                                    "Pesquisa não possui perguntas, clique abaixo para adicionar uma agora mesmo!" :
+                                    <ListItem>
+                                        Pesquisa não possui perguntas, clique abaixo para adicionar uma agora mesmo!
+                                    </ListItem> :
                                     questions.map((question, index) => (
                                         <div key={index}>
                                             <ListItem>
                                                 <ListItemButton onClick={() => toggleOpen(question.id)}>
                                                     <ListItemText
-                                                        primary={<p style={{ color: 'white' }}>{question.title}</p>}
+                                                        primary={
+                                                            <p style={{ color: 'white' }}>
+                                                                {isTitleEditable(question.id) ?
+                                                                    <TextField value={question.title} onChange={e => setQuestions(currentQuestions => currentQuestions.map(ques => ques.id == question.id ? { ...question, title: e.target.value } : ques))} />
+                                                                    :
+                                                                    question.title
+                                                                }
+                                                            </p>
+                                                        }
                                                     />
+                                                    <IconButton
+                                                        onClick={() => toggleEditableTitle(question.id)}
+                                                    >
+                                                        {isTitleEditable(question.id) ? <SaveIcon /> : <EditIcon />}
+                                                    </IconButton>
                                                     {isOpen(question.id) ? <ExpandLess /> : <ExpandMore />}
                                                 </ListItemButton>
                                             </ListItem>
                                             <Collapse in={isOpen(question.id)} timeout="auto" unmountOnExit>
                                                 <List component="div" disablePadding>
                                                     <ListItem sx={{ pl: 6 }}>
-                                                        <Box sx={{ minWidth: 120 }}>
+                                                        <Box sx={{ minWidth: 240 }}>
                                                             <FormControl fullWidth>
                                                                 <InputLabel id="question-type-label">Tipo de questão</InputLabel>
                                                                 <Select
@@ -179,6 +291,7 @@ function EditSurvey() {
                                                                     id="demo-simple-select"
                                                                     value={question.type}
                                                                     label="Tipo de questão"
+                                                                    sx={{ width: '100%' }}
                                                                     onChange={e => handleQuestionTypeEnumChange(e, question.id)}
                                                                 >
                                                                     <MenuItem value={QuestionTypeEnum.MULTIPLE_ANSWER}>Múltipla escolha</MenuItem>
@@ -186,44 +299,50 @@ function EditSurvey() {
                                                                     <MenuItem value={QuestionTypeEnum.MULTIPLE_ANSWER_OTHER}>Múltipla escolha + Outro</MenuItem>
                                                                 </Select>
                                                             </FormControl>
-                                                            <Button sx={{ position: 'absolute', right: '2%' }}>
+                                                            <Button
+                                                                sx={{ position: 'absolute', right: '2%' }}
+                                                                onClick={() => deleteQuestion(question.id)}
+                                                            >
                                                                 <DeleteIcon color="action" />
                                                             </Button>
                                                         </Box>
                                                     </ListItem>
                                                     <ListItem sx={{ pl: 8 }}>
-                                                        {question.type != QuestionTypeEnum.FREE_TEXT && (
-                                                            (question.alternatives ?? []).map((alternative, aIndex) => (
-                                                                <div key={aIndex}>
-                                                                    <InputLabel htmlFor="deleta-senha">Valor</InputLabel>
-                                                                    <OutlinedInput
-                                                                        label="Valor"
-                                                                        id="deleta-senha"
-                                                                        endAdornment={
-                                                                            <InputAdornment position="end">
-                                                                                <IconButton
-                                                                                    aria-label="deleta alternativa"
-                                                                                    edge="end"
-                                                                                >
-                                                                                    <DeleteIcon color="action" />
-                                                                                </IconButton>
-                                                                            </InputAdornment>
-                                                                        }
-                                                                    />
-                                                                </div>
+                                                        <List>
+                                                            {question.type > QuestionTypeEnum.FREE_TEXT && (
+                                                                (question.alternatives ?? []).map((alternative, aIndex) => (
+                                                                    <ListItem key={aIndex}>
+                                                                        <OutlinedInput
+                                                                            label="Valor"
+                                                                            value={alternative.name}
+                                                                            onChange={e => handleAlternativeNameChange(e, alternative.id, question.id)}
+                                                                            endAdornment={
+                                                                                <InputAdornment position="end">
+                                                                                    <IconButton
+                                                                                        aria-label="deleta alternativa"
+                                                                                        edge="end"
+                                                                                        onClick={() => deleteAlternative(alternative.id, question.id)}
+                                                                                    >
+                                                                                        <DeleteIcon color="action" />
+                                                                                    </IconButton>
+                                                                                </InputAdornment>
+                                                                            }
+                                                                        />
+                                                                    </ListItem>
+                                                                )
+                                                                )
                                                             )
-                                                            )
-                                                        )
-                                                        }
+                                                            }
+                                                        </List>
                                                     </ListItem>
-                                                    { question.type != QuestionTypeEnum.FREE_TEXT && (
+                                                    {question.type > QuestionTypeEnum.FREE_TEXT && (
                                                         <ListItem>
                                                             <Button
                                                                 color="success"
                                                                 startIcon={<AddIcon />}
                                                                 sx={{ ml: 8 }}
                                                                 onClick={() => {
-                                                                    addAlternativeToQuestion(question.id, {} as Alternative)
+                                                                    addAlternativeToQuestion(question.id)
                                                                 }}
                                                             >
                                                                 Adicionar alternativa
@@ -236,7 +355,16 @@ function EditSurvey() {
                                         </div>
                                     ))
                             }
-
+                            <ListItem>
+                                <Button
+                                    color="success"
+                                    variant="contained"
+                                    startIcon={<AddIcon />}
+                                    onClick={() => addQuestion()}
+                                >
+                                    Adicionar Pergunta
+                                </Button>
+                            </ListItem>
                         </List>
                     </Box>
                 </FormItem>

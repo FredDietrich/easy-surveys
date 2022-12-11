@@ -1,68 +1,37 @@
-import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Grid from "@mui/material/Grid";
-import List from "@mui/material/List";
-import ListItem from "@mui/material/ListItem";
 import Typography from "@mui/material/Typography";
-import { useEffect, useMemo, useState } from "react";
-import { RouteObject, useNavigate, useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, RouteObject, useNavigate, useParams } from "react-router-dom";
 import FormItem from "../components/form-item.component";
 import Form from "../components/form.component";
 import Header from "../components/header.component";
 import Survey from "../model/survey.model";
-import Question, { QuestionTypeEnum } from "../model/question.model";
-import ListItemText from "@mui/material/ListItemText";
-import Divider from "@mui/material/Divider";
-import FormControl from "@mui/material/FormControl";
-import InputLabel from "@mui/material/InputLabel";
-import Select from "@mui/material/Select";
-import NavigateNextIcon from '@mui/icons-material/NavigateNext';
-import NavigateBeforeIcon from '@mui/icons-material/NavigateBefore';
-import { TextField } from "@mui/material";
-import Answer from "../model/answer.model";
-import { AnswerSurvey } from "./answer-survey.page";
 import { Bar, BarChart, CartesianGrid, Legend, Tooltip, XAxis, YAxis } from "recharts";
+import * as api from '../api/api';
 
-type MyDatum = { date: number, stars: number }
+type AnswersData = {
+    value: string,
+    count: number
+}
 
 function ViewSurvey() {
 
     const { surveyId } = useParams();
     const navigate = useNavigate();
     const [survey, setSurvey] = useState<Survey | undefined>();
-    const [question, setQuestion] = useState<Question>();
-    const [answer, setAnswer] = useState<Answer>();
-
-    const data = [
-        {
-            name: 'Rede social',
-            Respostas: 2400,
-        },
-        {
-            name: 'Anúncio em mecanismo de busca',
-            Respostas: 1398,
-        },
-        {
-            name: 'Promoção física (banner, cartaz...)',
-            Respostas: 9800,
-        },
-        {
-            name: 'Indicação de amigo',
-            Respostas: 3908,
-        },
-        {
-            name: 'Direto da loja de apps',
-            Respostas: 4800,
-        }
-    ];
+    const [answersData, setAnswersData] = useState<AnswersData[]>();
 
     useEffect(() => {
         if (!surveyId || Number.isNaN(+surveyId)) {
             navigate('/listing')
             return
         }
-        // setTimeout(() => setSurvey({ id: +surveyId, title: `Pesquisa ${surveyId}` }), 0)
-        // setTimeout(() => setQuestion({ id: 1, title: 'Em poucas palavras, descreva como encontrou o app:', type: QuestionTypeEnum.MULTIPLE_ANSWER_OTHER }), 0)
+        async function fetchAnswersData() {
+            const { data } = await api.get('survey/' + surveyId + '/alternativeResults')
+            setAnswersData(data)
+        }
+        fetchAnswersData()
     }, [])
 
     return (
@@ -135,37 +104,45 @@ function ViewSurvey() {
                         Abaixo você pode visualizar gráficos, com os resultados da pesquisa:
                     </Typography>
                 </FormItem>
-                <FormItem>
+                {
+                    ( answersData?.length > 0 && answersData ) ? answersData.map(answerData => (
+                        <>
+                            <FormItem>
+                                <Typography
+                                    variant="h6"
+                                    component="div"
+                                    sx={{
+                                        color: '#ffffff',
+                                    }}
+                                >
+                                    Pergunta 1:
+                                </Typography>
+                                <BarChart
+                                    width={800}
+                                    height={600}
+                                    data={answerData}
+                                    margin={{
+                                        top: 5,
+                                        right: 30,
+                                        left: 20,
+                                        bottom: 5,
+                                    }}
+                                    title="Pergunta 1"
+                                >
+                                    <CartesianGrid strokeDasharray="3 3" />
+                                    <XAxis dataKey="name" />
+                                    <YAxis />
+                                    <Tooltip />
+                                    <Legend />
+                                    <Bar dataKey="Respostas" fill="#8884d8" />
+                                </BarChart>
+                            </FormItem>
+                        </>
+                    )):
+                    <p>carregando</p>
+                }
+                {/*  */}
                 <Typography
-                        variant="h6"
-                        component="div"
-                        sx={{
-                            color: '#ffffff',
-                        }}
-                    >
-                        Pergunta 1:
-                    </Typography>
-                    <BarChart
-                        width={800}
-                        height={600}
-                        data={data}
-                        margin={{
-                            top: 5,
-                            right: 30,
-                            left: 20,
-                            bottom: 5,
-                        }}
-                        title="Pergunta 1"
-                    >
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" />
-                        <YAxis />
-                        <Tooltip />
-                        <Legend />
-                        <Bar dataKey="Respostas" fill="#8884d8" />
-                    </BarChart>
-                </FormItem>
-                {/* <Typography
                     variant="h4"
                     component="div"
                     sx={{
@@ -175,9 +152,13 @@ function ViewSurvey() {
                 >
                     Abaixo você pode visualizar a pesquisa, assim como seus usuários irão:
                 </Typography>
-                <div style={{ border: 'solid 2px', borderRadius: '0 0 25px 25px' }}>
-                    <AnswerSurvey />
-                </div> */}
+                <div>
+                    <Link to={"/answer/" + surveyId} target="_blank">
+                        <Button variant="contained">
+                            Ir para a resposta de pesquisa
+                        </Button>
+                    </Link>
+                </div>
             </Form>
         </div>
     )

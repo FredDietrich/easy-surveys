@@ -1,5 +1,5 @@
 export default interface Alternative {
+    name: string;
     id: number,
-    title: string,
     questionId: number
 }

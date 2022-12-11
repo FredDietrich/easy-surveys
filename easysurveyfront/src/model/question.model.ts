@@ -1,4 +1,5 @@
 import Alternative from "./alternative.model";
+import Answer from "./answer.model";
 import Survey from "./survey.model";
 
 export default interface Question {
@@ -16,10 +17,12 @@ export default interface Question {
     survey: Survey
 
     alternatives: Alternative[]
+
+    answers: Answer[]
 }
 
 export enum QuestionTypeEnum {
-    MULTIPLE_ANSWER,
     FREE_TEXT,
+    MULTIPLE_ANSWER,
     MULTIPLE_ANSWER_OTHER
 }

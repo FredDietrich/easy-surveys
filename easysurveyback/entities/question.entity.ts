@@ -1,5 +1,6 @@
 import { BelongsTo, Column, ForeignKey, HasMany, Model, Table } from 'sequelize-typescript'
 import { Alternative } from './alternative.entity'
+import { Answer } from './answer.entity'
 import { Survey } from './survey.entity'
 
 export enum QuestionTypeEnum {
@@ -29,5 +30,8 @@ export class Question extends Model {
 
     @HasMany(() => Alternative)
     declare alternatives: Alternative[]
+
+    @HasMany(() => Answer)
+    declare answers: Answer[]
 
 }

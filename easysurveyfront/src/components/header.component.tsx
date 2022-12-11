@@ -9,7 +9,7 @@ interface IHeaderProps {
 }
 
 export default function Header({ loggedIn }: IHeaderProps) {
-    const { signed } = useAuth();
+    const { signed, Logout } = useAuth();
     return (
         <Box sx={{ flexGrow: 1 }}>
             <AppBar
@@ -27,10 +27,11 @@ export default function Header({ loggedIn }: IHeaderProps) {
                     >
                         Easy Surveys
                     </Typography>
-                    <Link to={signed ? "/logout" : "/login"}>
+                    <Link to={signed ? "./" : "/login"}>
                         <Button
                             variant="contained"
                             color={signed ? "error" : "primary"}
+                            onClick={() => Logout()}
                         >
                             {signed ? "Sair" : "Login"}
                         </Button>

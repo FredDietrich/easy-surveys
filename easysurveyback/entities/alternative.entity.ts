@@ -12,7 +12,10 @@ export class Alternative extends Model {
     @Column
     declare questionId: number
 
-    @BelongsTo(() => Question)
+    @BelongsTo(() => Question, {
+        onDelete: 'CASCADE',
+        onUpdate: 'NO ACTION'
+    })
     declare question: Question
 
     @HasMany(() => Answer)

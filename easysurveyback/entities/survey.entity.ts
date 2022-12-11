@@ -21,7 +21,10 @@ export class Survey extends Model {
     @Column
     declare userId: number
 
-    @BelongsTo(() => User)
+    @BelongsTo(() => User, {
+        onDelete: 'CASCADE',
+        onUpdate: 'NO ACTION'
+    })
     declare user: User
 
     @HasMany(() => Question)

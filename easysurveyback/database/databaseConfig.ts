@@ -19,5 +19,3 @@ export default async function initializeSequelize() {
 
     return sequelize.sync()
 }
-
-

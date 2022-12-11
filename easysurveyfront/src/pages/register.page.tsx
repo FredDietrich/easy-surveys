@@ -1,23 +1,20 @@
 import TextField from "@mui/material/TextField";
-import { Link, RouteObject } from "react-router-dom";
+import { Link, RouteObject, useNavigate } from "react-router-dom";
 import FormItem from "../components/form-item.component";
 import Form from "../components/form.component";
 import Header from "../components/header.component";
 import DynamicFormIcon from '@mui/icons-material/DynamicForm';
 import Typography from "@mui/material/Typography";
-import styled from "@emotion/styled";
 import { useState } from "react";
 import { Button } from "@mui/material";
+import * as api from '../api/api';
+import { AxiosError } from "axios";
 
 interface IRegisterFormData {
     username: string,
     name: string,
     email: string,
     password: string
-}
-
-function handleRegister(loginData: IRegisterFormData) {
-    //TODO: Fazer cadastro
 }
 
 function RegisterPage() {
@@ -27,6 +24,20 @@ function RegisterPage() {
         email: "",
         password: ""
     });
+
+    const navigate = useNavigate()
+
+    async function handleRegister(loginData: IRegisterFormData) {
+        try {
+            await api.post("user", loginData)
+            navigate("/login")
+        } catch (e) {
+            if (!(e instanceof AxiosError) || !e || !e.response) return
+            if (e.response.status == 422) {
+                alert(e.response.data)
+            }
+        }
+    }
 
     return (
         <div className="RegisterPage">
@@ -62,7 +73,6 @@ function RegisterPage() {
                         variant="outlined"
                         color="primary"
                         fullWidth
-                        autoFocus
                         required
                         value={registerFormData.username}
                         onChange={e => setRegisterFormData({ ...registerFormData, username: e.target.value })}
