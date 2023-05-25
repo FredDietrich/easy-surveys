@@ -74,21 +74,23 @@ function EditSurvey() {
         }
         const createdQuestion = await api.post("question", { title: "Edite-me clicando no lápis" })
         await api.put("survey/" + survey.id + "/question", { id: createdQuestion.data.id })
-        await saveSurvey()
+        const fakeUpdateSurvey = addQuestionToSurvey(createdQuestion.data)
+        // await saveSurvey(fakeUpdateSurvey)
         location.reload()
+    }
+
+    function addQuestionToSurvey(newQuestion: Question) {
+        return {
+            ...survey,
+            questions: [...(survey.questions ?? []), newQuestion]
+        }
     }
 
     async function addAlternativeToQuestion(questionId: number) {
         const foundQuestion = questions.find(question => question.id == questionId)
         if (!foundQuestion) return
         const createdAlternative = await api.post("alternative", { name: "Edite meu nome" })
-        setQuestions(currentQuestions => 
-            currentQuestions.map(quest => {
-                return quest.id == questionId ? {...quest, alternatives: [...quest.alternatives, createdAlternative.data]} : quest
-            })
-        )
         await api.put("question/" + questionId + "/alternative", { id: createdAlternative.data.id })
-        await saveSurvey()
         location.reload()
     }
 
@@ -130,14 +132,15 @@ function EditSurvey() {
         }))
     }
 
-    async function saveSurvey() {
-        await api.put('survey/'+ survey.id, {...survey})
-        if ((questions.length != survey.questions?.length) &&  (survey.questions && survey.questions.length > 0)) {
-            await api.put("survey/" + survey.id, {...survey, questions})
+    async function saveSurvey(surveyParam?: Partial<Survey>) {
+        surveyParam = surveyParam ? surveyParam : survey
+        await api.put('survey/' + surveyParam.id, { ...surveyParam })
+        if ((questions.length != surveyParam.questions?.length) && (surveyParam.questions && surveyParam.questions.length > 0)) {
+            await api.put("survey/" + surveyParam.id, { ...surveyParam, questions })
         }
-        questions.forEach(async (question, index) => {
+        await Promise.all(questions.map(async (question, index) => {
             await api.put("question/" + question.id, JSON.parse(JSON.stringify({ ...question, order: index + 1 })))
-        })
+        }))
         alert('Pesquisa salva com sucesso')
     }
 
