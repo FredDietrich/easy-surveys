@@ -2,7 +2,7 @@
 import { PassportStatic } from 'passport'
 import { User } from '../entities/user.entity'
 import { compare } from 'bcrypt'
-import { Strategy } from 'passport-local'
+import { Strategy, VerifyFunction } from 'passport-local'
 import { BasicStrategy } from 'passport-http'
 import { Strategy as JwtStrategy } from 'passport-jwt'
 import { ExtractJwt } from 'passport-jwt'
@@ -12,8 +12,11 @@ dotenv.config()
 
 const jwtSecret = process.env.JWT_SECRET ?? 'superDuperSecretSecret'
 
+type DoneFunction = Parameters<VerifyFunction>[2]
+
 export function initializePassport(passport: PassportStatic) {
-    async function authenticateUser(username: string, password: string, done: (arg0: null, arg1: boolean | User) => void) {
+
+    async function authenticateUser(username: string, password: string, done: DoneFunction) {
         const foundUsers = await User.findAll(
             {
                 where: {
@@ -55,11 +58,13 @@ export function initializePassport(passport: PassportStatic) {
         )
     )
 
-    passport.serializeUser((user: any, done: (err: unknown, id?: number | undefined) => void) => {
+    passport.serializeUser((user: any, done: DoneFunction) => {
         return done(null, user.id)
     })
 
-    passport.deserializeUser(async (id: any, done: (err: unknown, user?: false | Express.User | null | undefined) => void) => {
+    type DeserializationDoneFunction = Parameters<Parameters<typeof passport.deserializeUser>[0]>[2]
+
+    passport.deserializeUser(async (id: any, done: DeserializationDoneFunction) => {
         const user = await User.findByPk(id)
         done(null, user)
     })
