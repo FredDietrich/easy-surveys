@@ -42,9 +42,9 @@ surveyRouter.put('/survey/:id', async (req: Request<Record<string, any>, Record<
                 return foundQuestion.id === bodyQuestion.id
             })
         })
-        different.forEach(async questionToBeDeleted => {
+        await Promise.all(different.map(async questionToBeDeleted => {
             questionToBeDeleted.destroy()
-        })
+        }))
     }
     await foundSurvey.update({...req.body})
     res.status(204).send()
