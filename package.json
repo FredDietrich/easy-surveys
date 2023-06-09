@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "supertest": "^6.3.3"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.2",
+    "@types/supertest": "^2.0.12"
+  }
+}

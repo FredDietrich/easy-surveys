@@ -43,3 +43,5 @@ initializePassport(passport)
 app.listen(port, () => {
     console.log(`⚡️[backend]: Server running on http://localhost:${port}`)
 })
+
+export default app
